@@ -336,12 +336,8 @@ public abstract class GenericTableBase extends JDBCTable<GenericDataSource, Gene
             // some drivers don't like it
             final GenericMetaObject fkObject = getDataSource().getMetaObject(GenericConstants.OBJECT_FOREIGN_KEY);
             final List<ForeignKeyInfo> fkInfos = new ArrayList<>();
-            JDBCDatabaseMetaData metaData = session.getMetaData();
             // Load indexes
-            try (JDBCResultSet dbResult = metaData.getExportedKeys(
-                getCatalog() == null ? null : getCatalog().getName(),
-                getSchema() == null ? null : getSchema().getName(),
-                getName()))
+            try (JDBCResultSet dbResult = prepareLoadReferencesResultSet(session))
             {
                 while (dbResult.next()) {
                     ForeignKeyInfo fkInfo = new ForeignKeyInfo();
@@ -461,6 +457,14 @@ public abstract class GenericTableBase extends JDBCTable<GenericDataSource, Gene
                 throw new DBException(ex, getDataSource());
             }
         }
+    }
+
+    public JDBCResultSet prepareLoadReferencesResultSet(@NotNull JDBCSession session) throws SQLException {
+        JDBCDatabaseMetaData metaData = session.getMetaData();
+        return metaData.getExportedKeys(
+                getCatalog() == null ? null : getCatalog().getName(),
+                getSchema() == null ? null : getSchema().getName(),
+                getName());
     }
 
     @Nullable
